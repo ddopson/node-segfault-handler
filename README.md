@@ -17,6 +17,7 @@ segvhandler.causeSegfault(); // simulates a buggy native module that dereference
 Obviously, you would only include the first two lines in your own code; the third is for testing purposes and to demonstrate functionality.
 
 After running the above sample, you will see a stacktrace that looks like:
+
 ```
 PID 67926 received SIGSEGV for address: 0x0
 0   segvhandler_native.node             0x00000001007e83d6 _ZL16segfault_handleriP9__siginfoPv + 235
