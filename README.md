@@ -34,7 +34,7 @@ Cheers, enjoy.  And happy hunting.
 
 # License
 
-[WTFPL](http://en.wikipedia.org/wiki/WTFPL).  Though if you make good use of this or any of my other tools, I'd appreciate an email letting me know what you used it for or how you stumbled across it.
+This software is licensed for use under the [WTFPL](http://en.wikipedia.org/wiki/WTFPL); version 2 if it's a lawyer asking.  Though if you make good use of this or any of my other tools, I'd appreciate an email letting me know what you used it for or how you stumbled across it.
 
 
    ---  Dave
