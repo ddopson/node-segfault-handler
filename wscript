@@ -24,4 +24,4 @@ def build(bld):
         obj.ldflags = ['']
 
     obj.target = "segvhandler_native"
-    obj.source = "src/segvhandler.cpp"
+    obj.source = "src/binding.cc"
