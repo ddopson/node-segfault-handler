@@ -75,7 +75,10 @@ Handle<Value> RegisterHandler(const Arguments& args) {
   return Undefined();
 }
 
-extern "C" void init(Handle<Object> target) {
-  NODE_SET_METHOD(target, "registerHandler", RegisterHandler);
-  NODE_SET_METHOD(target, "causeSegfault", CauseSegfault);
+extern "C" {
+  void init(Handle<Object> target) {
+    NODE_SET_METHOD(target, "registerHandler", RegisterHandler);
+    NODE_SET_METHOD(target, "causeSegfault", CauseSegfault);
+  }  
+  NODE_MODULE(segvhandler, init); 
 }
