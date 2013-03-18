@@ -12,7 +12,7 @@
   }
   ,"devDependencies": {
   }
-  ,"main": "lib/segvcatcher.js"
+  ,"main": "lib/segvhandler.js"
   ,"directories": {
     "bin": "./bin"
   }
