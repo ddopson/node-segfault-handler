@@ -49,15 +49,19 @@ static void segfault_handler(int sig, siginfo_t *si, void *unused) {
   exit(-1);
 }
 
-// create some stack frames to inspect
+// create some stack frames to inspect from CauseSegfault
 void segfault_stack_frame_1()
 {
   int *foo = 0;
+  printf("Hello World22\n");
   *foo = 78; // trigger a SIGSEGV
+  printf("Hello World3\n");
 }
+
 void segfault_stack_frame_2(void) {
   segfault_stack_frame_1();
 }
+
 Handle<Value> CauseSegfault(const Arguments& args) {
   segfault_stack_frame_2();
   return Undefined();  // this line never runs
@@ -75,7 +79,10 @@ Handle<Value> RegisterHandler(const Arguments& args) {
   return Undefined();
 }
 
-extern "C" void init(Handle<Object> target) {
-  NODE_SET_METHOD(target, "registerHandler", RegisterHandler);
-  NODE_SET_METHOD(target, "causeSegfault", CauseSegfault);
+extern "C" {
+  void init(Handle<Object> target) {
+    NODE_SET_METHOD(target, "registerHandler", RegisterHandler);
+    NODE_SET_METHOD(target, "causeSegfault", CauseSegfault);
+  }
+  NODE_MODULE(segvhandler, init);
 }

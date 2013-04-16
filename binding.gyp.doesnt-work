@@ -1,0 +1,49 @@
+{
+  "targets": [
+    {
+      "target_name": "segfault-handler",
+      'include_dirs': [
+      ],
+          'cflags': [
+            "-Wall",
+            "--BALALASHASHA",
+            "-Werror",
+            '-DDEBUG',
+            '-O0',
+            '-mmacosx-version-min=10.4'
+          ],
+      'conditions': [
+        ['OS=="mac"', {
+          'cflags_cc': [
+            "-Wall",
+            "--BALALASHASHA",
+            "-Werror",
+            '-DDEBUG',
+            '-O0',
+            '-mmacosx-version-min=10.4'
+          ],
+          'link_settings': {
+            'ldflags': [
+              '-mmacosx-version-min=10.4'
+            ]
+          }
+        }],
+        ['OS=="moac"', {
+          'cflags_cc': [
+            "-Wall",
+            '-DDEBUG',
+            '-O0'
+          ],
+          'link_settings': {
+            'ldflags': [
+            ]
+          }
+        }]
+      ],
+      "sources": [
+        "src/segfault-handler.cpp"
+      ]
+    }
+  ]
+}
+

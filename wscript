@@ -23,5 +23,5 @@ def build(bld):
         obj.cxxflags = ["-Wall", "-Werror", '-DDEBUG', '-O0']
         obj.ldflags = ['']
 
-    obj.target = "segvhandler_native"
-    obj.source = "src/segvhandler.cpp"
+    obj.target = "segfault-handler"
+    obj.source = "src/segfault-handler.cpp"
