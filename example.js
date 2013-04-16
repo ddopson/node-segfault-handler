@@ -1,7 +1,11 @@
 #!/usr/bin/env node
-var segvhandler = require('./lib/segvhandler')
+var segvhandler = require('./')
 
 segvhandler.registerHandler();
 
 console.log("About to cause a Segfault");
-segvhandler.causeSegfault();
+try {
+  segvhandler.causeSegfault();
+}catch (e) {
+  console.log("Bye")
+}

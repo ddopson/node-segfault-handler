@@ -1,23 +1,9 @@
 {
-  "name": "segvcatcher"
+  "name": "segfault-handler"
   ,"description": "catches SIGSEGV and prints diagnostic information"
-  ,"private": "true"
-  ,"version": "0.1.0"
-  ,"zseattle-autobuild": "1"
+  ,"version": "0.2.0"
   ,"contributors": [
-    "Dave Dopson <ddopson@zynga.com>"
-    ,"Dave Dopson <ddopson@gmail.com>"
+    "Dave Dopson <ddopson@gmail.com>"
   ]
-  ,"dependencies": {
-  }
-  ,"devDependencies": {
-  }
-  ,"main": "lib/segvcatcher.js"
-  ,"directories": {
-    "bin": "./bin"
-  }
-  ,"scripts": {
-    "build" : "node-waf configure build"
-    ,"test" : "vows --spec test/*-test.js"
-  }
+  ,"main": "index.js"
 }
