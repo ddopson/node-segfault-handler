@@ -2,8 +2,14 @@
   "name": "segfault-handler"
   ,"description": "catches SIGSEGV and prints diagnostic information"
   ,"version": "0.2.0"
+  ,"author": "Dave Dopson <ddopson@gmail.com>"
   ,"contributors": [
-    "Dave Dopson <ddopson@gmail.com>"
+     "Dave Dopson <ddopson@gmail.com>"
+    ,"Mark Smith <msmith@rallydev.com>"
+    ,"David Swift <dswift@pccowboy.com>"
   ]
+  ,"dependencies": {
+    "bindings": "*"
+  }
   ,"main": "index.js"
 }
