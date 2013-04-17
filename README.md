@@ -6,11 +6,11 @@ Using the module is as simple as:
 
 ```javascript
 
-var segvhandler = require('segvcatcher');
+var SegfaultHandler = require('segfault-handler');
 
-segvhandler.registerHandler();
+SegfaultHandler.registerHandler();
 
-segvhandler.causeSegfault(); // simulates a buggy native module that dereferences NULL
+SegfaultHandler.causeSegfault(); // simulates a buggy native module that dereferences NULL
 
 ```
 
@@ -20,11 +20,11 @@ After running the above sample, you will see a stacktrace that looks like:
 
 ```
 PID 67926 received SIGSEGV for address: 0x0
-0   segvhandler_native.node             0x00000001007e83d6 _ZL16segfault_handleriP9__siginfoPv + 235
+0   segfault-handler-native.node        0x00000001007e83d6 _ZL16segfault_handleriP9__siginfoPv + 235
 1   libSystem.B.dylib                   0x00007fff844d11ba _sigtramp + 26
 2   ???                                 0x00007fff5fc404a0 0x0 + 140734800069792
-3   segvhandler_native.node             0x00000001007e80fd _Z22segfault_stack_frame_2v + 9
-4   segvhandler_native.node             0x00000001007e82d4 _Z13CauseSegfaultRKN2v89ArgumentsE + 17
+3   segfault-handler-native.node        0x00000001007e80fd _Z22segfault_stack_frame_2v + 9
+4   segfault-handler-native.node        0x00000001007e82d4 _Z13CauseSegfaultRKN2v89ArgumentsE + 17
 5   node                                0x00000001000a45de _ZN2v88internalL21Builtin_HandleApiCallENS0_12_GLOBAL__N_116BuiltinArgumentsILNS0_21BuiltinExtraArgumentsE1EEEPNS0_7IsolateE + 430
 ```
 

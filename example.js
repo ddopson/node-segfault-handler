@@ -1,11 +1,6 @@
 #!/usr/bin/env node
-var segvhandler = require('./')
+var SegfaultHandler = require('./'); // you'd use require('segfault-handler')
 
-segvhandler.registerHandler();
+SegfaultHandler.registerHandler();
 
-console.log("About to cause a Segfault");
-try {
-  segvhandler.causeSegfault();
-}catch (e) {
-  console.log("Bye")
-}
+SegfaultHandler.causeSegfault(); // simulates a buggy native module that dereferences NULL
