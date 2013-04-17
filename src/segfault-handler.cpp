@@ -67,17 +67,15 @@ void segfault_stack_frame_1()
 
 __attribute__ ((noinline)) 
 void segfault_stack_frame_2(void) {
+  // use a function pointer to thwart inlining
   void (*fn_ptr)() = segfault_stack_frame_1;
-  fn_ptr();
-  //segfault_stack_frame_1();
-  
-  // This code never runs.  But it prevents function inlining.  Ugh.  Soo many compiler hacks
-  fn_ptr = segfault_stack_frame_2;
   fn_ptr();
 }
 
 Handle<Value> CauseSegfault(const Arguments& args) {
-  segfault_stack_frame_2();
+  // use a function pointer to thwart inlining
+  void (*fn_ptr)() = segfault_stack_frame_2;
+  fn_ptr();
   return Undefined();  // this line never runs
 }
 
