@@ -50,24 +50,36 @@ static void segfault_handler(int sig, siginfo_t *si, void *unused) {
 }
 
 // create some stack frames to inspect from CauseSegfault
+__attribute__ ((noinline)) 
 void segfault_stack_frame_1()
 {
-  int *foo = 0;
-  printf("Hello World22\n");
+  // DDOPSON-2013-04-16 using the address "1" instead of "0" prevents a nasty compiler over-optimization
+  // When using "0", the compiler will over-optimize (unless using -O0) and generate a UD2 instruction
+  // UD2 is x86 for "Invalid Instruction" ... (yeah, they have a valid code that means invalid)
+  // Long story short, we don't get our SIGSEGV.  Which means no pretty demo of stacktraces.
+  // Instead, you see "Illegal Instruction: 4" on the console and the program stops.
+
+  int *foo = (int*)1;
+  printf("NodeSegfaultHandlerNative: about to dereference NULL (will cause a SIGSEGV)\n");
   *foo = 78; // trigger a SIGSEGV
-  printf("Hello World3\n");
+
 }
 
+__attribute__ ((noinline)) 
 void segfault_stack_frame_2(void) {
-  segfault_stack_frame_1();
+  void (*fn_ptr)() = segfault_stack_frame_1;
+  fn_ptr();
+  //segfault_stack_frame_1();
+  
+  // This code never runs.  But it prevents function inlining.  Ugh.  Soo many compiler hacks
+  fn_ptr = segfault_stack_frame_2;
+  fn_ptr();
 }
 
 Handle<Value> CauseSegfault(const Arguments& args) {
   segfault_stack_frame_2();
   return Undefined();  // this line never runs
 }
-
-
 
 Handle<Value> RegisterHandler(const Arguments& args) {
   struct sigaction sa;
