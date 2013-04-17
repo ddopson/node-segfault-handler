@@ -96,5 +96,5 @@ extern "C" {
     NODE_SET_METHOD(target, "registerHandler", RegisterHandler);
     NODE_SET_METHOD(target, "causeSegfault", CauseSegfault);
   }
-  NODE_MODULE(segvhandler, init);
+  NODE_MODULE(segfault_handler, init);
 }
