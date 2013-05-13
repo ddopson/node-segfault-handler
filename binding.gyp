@@ -1,7 +1,7 @@
 {
   "targets": [
     {
-      "target_name": "segfault-handler-native",
+      "target_name": "segfault_handler",
       "sources": [
         "src/segfault-handler.cpp"
       ],
