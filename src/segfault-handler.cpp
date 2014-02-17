@@ -6,13 +6,17 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <assert.h>
 #include <stdarg.h>
 #include <node.h>
-#include <time.h>
 #include <node_buffer.h>
 #include <node_object_wrap.h>
 #include <v8-debug.h>
+
+#ifdef __APPLE__
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
+#endif
+
 using namespace v8;
 using namespace node;
 
@@ -21,30 +25,86 @@ using namespace node;
 static Persistent<Function> callback;
 static bool handlersSet = false;
 
-static void segfault_handler(int sig, siginfo_t *si, void *unused) {
-  void    *array[32]; // Array to store backtrace symbols
-  size_t  size;       // To store the size of the stack backtrace
-  char    sbuff[128];
-  int     n;          // chars written to buffer
-  int     pid;
+static void emptyCallback(siginfo_t *si) {
+  Local<Array> argStack = Local<Array>::New(Array::New(0));
+  Local<Value> argv[3] = {argStack, Local<Value>::New(Number::New(si->si_signo)), Local<Value>::New(Number::New((unsigned long long)si->si_addr))};
+  callback->Call(Context::GetCurrent()->Global(), 3, argv);
+}
 
-  pid = getpid();
+static void segfaultHandler(int sig, siginfo_t *si, void *unused) {
+  char buffer[1024 * 10];
 
-  n = snprintf(sbuff, sizeof(sbuff), "PID %d received SIGSEGV/SIGBUS (%i) for address: 0x%lx\n", pid, si->si_signo, (long)si->si_addr);
-  write(STDERR_FD, sbuff, n);
+  int pid = getpid();
 
-  size = backtrace(array, 32);
-  backtrace_symbols_fd(array, size, STDERR_FD);
+  snprintf(buffer, sizeof(buffer), "PID %d received SIGSEGV/SIGBUS (%i) for address: 0x%llx\n", pid, si->si_signo, (unsigned long long)si->si_addr);
+  write(STDERR_FD, buffer, strlen(buffer));
 
   if (!callback.IsEmpty()) {
-    char **stack = backtrace_symbols(array, size);
-    Local<Array> argStack = Local<Array>::New(Array::New(size));
-    for (size_t i = 0; i < size; i++) {
-      argStack->Set(i, String::New(stack[i]));
+    void *stack[32];
+    size_t stackSize;
+
+    stackSize = backtrace(stack, 32);
+
+    if (stackSize > 0) {
+      char **stackSymbols = backtrace_symbols(stack, stackSize);
+      Local<Array> argStack = Local<Array>::New(Array::New(stackSize));
+      for (size_t i = 0; i < stackSize; i++) {
+        argStack->Set(i, String::New(stackSymbols[i]));
+      }
+      free(stackSymbols);
+
+      Local<Value> argv[3] = {argStack, Local<Value>::New(Number::New(si->si_signo)), Local<Value>::New(Number::New((unsigned long long)si->si_addr))};
+      callback->Call(Context::GetCurrent()->Global(), 3, argv);
     }
-    Local<Value> argv[3] = {argStack, Local<Value>::New(Number::New(si->si_signo)), Local<Value>::New(Number::New((long)si->si_addr))};
-    callback->Call(Context::GetCurrent()->Global(), 3, argv);
-    free(stack);
+    else {
+#ifdef __APPLE__
+      unw_cursor_t cursor;
+      unw_context_t context;
+      unw_word_t pc;
+
+      unw_getcontext(&context);
+      unw_init_local(&cursor, &context);
+
+      snprintf(buffer, sizeof(buffer), "atos -p %i", pid);
+
+      int frames = 0;
+      while (unw_step(&cursor) > 0) {
+        frames++;
+        unw_get_reg(&cursor, UNW_REG_IP, &pc);
+        int len = strlen(buffer);
+        snprintf(buffer + len, sizeof(buffer) - len, " 0x%llx", pc);
+      }
+
+      if (frames > 0) {
+        FILE* program = popen(buffer, "r");
+        if (program != NULL) {
+          Local<Array> argStack = Local<Array>::New(Array::New(frames));
+          for (int i = 0; i < frames; i++) {
+            if (fgets(buffer, sizeof(buffer), program) == NULL) {
+              buffer[0] = '\0';
+            }
+            int len = strlen(buffer);
+            if (len > 0 && buffer[len - 1] == '\n') {
+              buffer[len - 1] = '\0';
+            }
+            argStack->Set(i, String::New(buffer));
+          }
+          pclose(program);
+
+          Local<Value> argv[3] = {argStack, Local<Value>::New(Number::New(si->si_signo)), Local<Value>::New(Number::New((unsigned long long)si->si_addr))};
+          callback->Call(Context::GetCurrent()->Global(), 3, argv);
+        }
+        else {
+          emptyCallback(si);
+        }
+      }
+      else {
+        emptyCallback(si);
+      }
+#else
+      emptyCallback(si);
+#endif
+    }
   }
 
   // Re-send the signal, this time a default handler will be called
@@ -101,7 +161,7 @@ Handle<Value> RegisterHandler(const Arguments& args) {
     struct sigaction sa;
     memset(&sa, 0, sizeof(struct sigaction));
     sigemptyset(&sa.sa_mask);
-    sa.sa_sigaction = segfault_handler;
+    sa.sa_sigaction = segfaultHandler;
     sa.sa_flags = SA_SIGINFO | SA_RESETHAND; // We set SA_RESETHAND so that our handler is called only once
     sigaction(SIGSEGV, &sa, NULL);
     sigaction(SIGBUS, &sa, NULL);
