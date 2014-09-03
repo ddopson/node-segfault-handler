@@ -6,47 +6,109 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <assert.h>
 #include <stdarg.h>
 #include <node.h>
-#include <time.h>
 #include <node_buffer.h>
 #include <node_object_wrap.h>
 #include <v8-debug.h>
+
+#ifdef __APPLE__
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
+#endif
+
 using namespace v8;
 using namespace node;
 
 #define STDERR_FD 2
 
-static void segfault_handler(int sig, siginfo_t *si, void *unused) {
-  void    *array[32]; // Array to store backtrace symbols
-  size_t  size;       // To store the size of the stack backtrace
-  char    sbuff[128];
-  int     n;          // chars written to buffer
-  int     fd;
-  time_t  now;
-  int     pid;
+static Persistent<Function> callback;
+static bool handlersSet = false;
 
-  // Construct a filename
-  time(&now);
-  pid = getpid();
-  snprintf(sbuff, sizeof(sbuff), "stacktrace-%d-%d.log", (int)now, pid );
+static void emptyCallback(siginfo_t *si) {
+  Local<Array> argStack = Local<Array>::New(Array::New(0));
+  Local<Value> argv[3] = {argStack, Local<Value>::New(Number::New(si->si_signo)), Local<Value>::New(Number::New((unsigned long long)si->si_addr))};
+  callback->Call(Context::GetCurrent()->Global(), 3, argv);
+}
 
-  // Open the File
-  fd = open(sbuff, O_CREAT | O_APPEND | O_WRONLY, S_IRUSR | S_IRGRP | S_IROTH);
-  // Write the header line
-  n = snprintf(sbuff, sizeof(sbuff), "PID %d received SIGSEGV for address: 0x%lx\n", pid, (long) si->si_addr);
-  if(fd > 0) write(fd, sbuff, n);
-  write(STDERR_FD, sbuff, n);
+static void segfaultHandler(int sig, siginfo_t *si, void *unused) {
+  char buffer[1024 * 10];
 
-  // Write the Backtrace
-  size = backtrace(array, 32);
-  if(fd > 0) backtrace_symbols_fd(array, size, fd);
-  backtrace_symbols_fd(array, size, STDERR_FD);
+  int pid = getpid();
 
-  // Exit violently
-  close(fd);
-  exit(-1);
+  snprintf(buffer, sizeof(buffer), "PID %d received SIGSEGV/SIGBUS (%i) for address: 0x%llx\n", pid, si->si_signo, (unsigned long long)si->si_addr);
+  write(STDERR_FD, buffer, strlen(buffer));
+
+  if (!callback.IsEmpty()) {
+    void *stack[32];
+    size_t stackSize;
+
+    stackSize = backtrace(stack, 32);
+
+    if (stackSize > 0) {
+      char **stackSymbols = backtrace_symbols(stack, stackSize);
+      Local<Array> argStack = Local<Array>::New(Array::New(stackSize));
+      for (size_t i = 0; i < stackSize; i++) {
+        argStack->Set(i, String::New(stackSymbols[i]));
+      }
+      free(stackSymbols);
+
+      Local<Value> argv[3] = {argStack, Local<Value>::New(Number::New(si->si_signo)), Local<Value>::New(Number::New((unsigned long long)si->si_addr))};
+      callback->Call(Context::GetCurrent()->Global(), 3, argv);
+    }
+    else {
+#ifdef __APPLE__
+      unw_cursor_t cursor;
+      unw_context_t context;
+      unw_word_t pc;
+
+      unw_getcontext(&context);
+      unw_init_local(&cursor, &context);
+
+      snprintf(buffer, sizeof(buffer), "atos -p %i", pid);
+
+      int frames = 0;
+      while (unw_step(&cursor) > 0) {
+        frames++;
+        unw_get_reg(&cursor, UNW_REG_IP, &pc);
+        int len = strlen(buffer);
+        snprintf(buffer + len, sizeof(buffer) - len, " 0x%llx", pc);
+      }
+
+      if (frames > 0) {
+        FILE* program = popen(buffer, "r");
+        if (program != NULL) {
+          Local<Array> argStack = Local<Array>::New(Array::New(frames));
+          for (int i = 0; i < frames; i++) {
+            if (fgets(buffer, sizeof(buffer), program) == NULL) {
+              buffer[0] = '\0';
+            }
+            int len = strlen(buffer);
+            if (len > 0 && buffer[len - 1] == '\n') {
+              buffer[len - 1] = '\0';
+            }
+            argStack->Set(i, String::New(buffer));
+          }
+          pclose(program);
+
+          Local<Value> argv[3] = {argStack, Local<Value>::New(Number::New(si->si_signo)), Local<Value>::New(Number::New((unsigned long long)si->si_addr))};
+          callback->Call(Context::GetCurrent()->Global(), 3, argv);
+        }
+        else {
+          emptyCallback(si);
+        }
+      }
+      else {
+        emptyCallback(si);
+      }
+#else
+      emptyCallback(si);
+#endif
+    }
+  }
+
+  // Re-send the signal, this time a default handler will be called
+  kill(pid, si->si_signo);
 }
 
 // create some stack frames to inspect from CauseSegfault
@@ -62,7 +124,6 @@ void segfault_stack_frame_1()
   int *foo = (int*)1;
   printf("NodeSegfaultHandlerNative: about to dereference NULL (will cause a SIGSEGV)\n");
   *foo = 78; // trigger a SIGSEGV
-
 }
 
 __attribute__ ((noinline)) 
@@ -80,13 +141,34 @@ Handle<Value> CauseSegfault(const Arguments& args) {
 }
 
 Handle<Value> RegisterHandler(const Arguments& args) {
-  struct sigaction sa;
-  memset(&sa, 0, sizeof(struct sigaction));
-  sigemptyset(&sa.sa_mask);
-  sa.sa_sigaction = segfault_handler;
-  sa.sa_flags   = SA_SIGINFO;
-  sigaction(SIGSEGV, &sa, NULL);
-  return Undefined();
+  HandleScope scope;
+
+  if (args.Length() > 0) {
+    if (!args[0]->IsFunction()) {
+      ThrowException(Exception::TypeError(String::New("Invalid callback argument")));
+      return scope.Close(Undefined());
+    }
+
+    if (!callback.IsEmpty()) {
+      callback.Dispose();
+      callback.Clear();
+    }
+    callback = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
+  }
+
+  // Set our handler only once
+  if (!handlersSet) {
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(struct sigaction));
+    sigemptyset(&sa.sa_mask);
+    sa.sa_sigaction = segfaultHandler;
+    sa.sa_flags = SA_SIGINFO | SA_RESETHAND; // We set SA_RESETHAND so that our handler is called only once
+    sigaction(SIGSEGV, &sa, NULL);
+    sigaction(SIGBUS, &sa, NULL);
+    handlersSet = true;
+  }
+
+  return scope.Close(Undefined());
 }
 
 extern "C" {
