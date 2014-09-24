@@ -13,6 +13,8 @@
 #include <node_buffer.h>
 #include <node_object_wrap.h>
 #include <v8-debug.h>
+#include <nan.h>
+
 using namespace v8;
 using namespace node;
 
@@ -72,21 +74,23 @@ void segfault_stack_frame_2(void) {
   fn_ptr();
 }
 
-Handle<Value> CauseSegfault(const Arguments& args) {
+NAN_METHOD(CauseSegfault) {
+  NanScope();
   // use a function pointer to thwart inlining
   void (*fn_ptr)() = segfault_stack_frame_2;
   fn_ptr();
-  return Undefined();  // this line never runs
+  NanReturnUndefined();  // this line never runs
 }
 
-Handle<Value> RegisterHandler(const Arguments& args) {
+NAN_METHOD(RegisterHandler) {
+  NanScope();
   struct sigaction sa;
   memset(&sa, 0, sizeof(struct sigaction));
   sigemptyset(&sa.sa_mask);
   sa.sa_sigaction = segfault_handler;
   sa.sa_flags   = SA_SIGINFO;
   sigaction(SIGSEGV, &sa, NULL);
-  return Undefined();
+  NanReturnUndefined();
 }
 
 extern "C" {
