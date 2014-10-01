@@ -6,7 +6,7 @@ Using the module is as simple as:
 
 ```javascript
 
-var SegfaultHandler = require('segfault-handler');
+var SegfaultHandler = require('segfault_handler');
 
 SegfaultHandler.registerHandler();
 
