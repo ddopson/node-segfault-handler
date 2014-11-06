@@ -1,7 +1,7 @@
 {
   "name": "segfault-handler",
   "description": "catches SIGSEGV and prints diagnostic information",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "author": "Dave Dopson <ddopson@gmail.com>",
   "contributors": [
     "Dave Dopson <ddopson@gmail.com>",
