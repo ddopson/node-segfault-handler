@@ -1,0 +1,8 @@
+PID 4901 received SIGSEGV for address: 0x1
+/home/anton/code/node-segfault-handler/build/Release/segfault-handler.node(+0x1175)[0x7f4849dc3175]
+/lib/x86_64-linux-gnu/libpthread.so.0(+0x10340)[0x7f484cba0340]
+/home/anton/code/node-segfault-handler/build/Release/segfault-handler.node(_Z22segfault_stack_frame_1v+0x10)[0x7f4849dc3360]
+/home/anton/code/node-segfault-handler/build/Release/segfault-handler.node(_Z13CauseSegfaultRKN2v820FunctionCallbackInfoINS_5ValueEEE+0x22)[0x7f4849dc33a2]
+node(_ZN2v88internal25FunctionCallbackArguments4CallEPFvRKNS_20FunctionCallbackInfoINS_5ValueEEEE+0x92)[0x7f8d52]
+node[0x8207d2]
+[0x303321e060bb]
