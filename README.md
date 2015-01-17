@@ -5,8 +5,7 @@ This module is a critical tool for debugging Node.js C/C++ native code modules, 
 Using the module is as simple as:
 
 ```javascript
-
-var SegfaultHandler = require('segfault_handler');
+var SegfaultHandler = require('segfault-handler');
 
 SegfaultHandler.registerHandler();
 
