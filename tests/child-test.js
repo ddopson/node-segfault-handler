@@ -1,9 +1,9 @@
 var spawn = require('child_process').spawn;
+var test  = require('tap').test;
 
 test('simple seg fault', function (t) {
    
    var seg   = spawn('node', ['example.js']);
-   var test  = require('tap').test;
 
    t.plan(1);
    var errdataevents = 0;   
