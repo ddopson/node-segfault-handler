@@ -1,4 +1,4 @@
-#!/usr/bin/env iojs
+#!/usr/bin/env node
 var SegfaultHandler = require('./'); // you'd use require('segfault-handler')
 
 SegfaultHandler.registerHandler();
