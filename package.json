@@ -1,7 +1,7 @@
 {
   "name": "segfault-handler",
   "description": "catches SIGSEGV and prints diagnostic information",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "author": "Dave Dopson <ddopson@gmail.com>",
   "contributors": [
     "Dave Dopson <ddopson@gmail.com>",
@@ -11,7 +11,7 @@
   ],
   "dependencies": {
     "bindings": "^1.2.1",
-    "nan": "^2.0.5"
+    "nan": "^2.0.9"
   },
   "main": "index.js"
 }
