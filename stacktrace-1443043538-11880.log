@@ -1,0 +1,16 @@
+PID 11620 received SIGSEGV for address: 0xeb281419
+SymInit: Symbol-SearchPath: '.;c:\github\node-segfault-handler;c:\Program Files\nodejs;C:\Windows;C:\Windows\system32;SRV*C:\websymbols*http://msdl.microsoft.com/download/symbols;', symOptions: 530, UserName: 'user'
+OS-Version: 6.3.9600 () 0x100-0x1
+c:\github\node-segfault-handler\src\stackwalker.cpp (941): StackWalker::ShowCallstack
+c:\github\node-segfault-handler\src\segfault-handler.cpp (114): segfault_handler
+00007FFF0A2622C7 (ntdll): (filename not available): RtlNormalizeString
+00007FFF0A2138FE (ntdll): (filename not available): RtlWalkFrameChain
+00007FFF0A29544A (ntdll): (filename not available): KiUserExceptionDispatcher
+c:\github\node-segfault-handler\src\segfault-handler.cpp (138): segfault_stack_frame_1
+c:\github\node-segfault-handler\node_modules\nan\nan_callbacks_12_inl.h (175): Nan::imp::FunctionCallbackWrapper
+00007FF64489D4A9 (node): (filename not available): v8::Unlocker::~Unlocker
+00007FF644865E90 (node): (filename not available): v8::Unlocker::~Unlocker
+00007FF644863D79 (node): (filename not available): v8::Unlocker::~Unlocker
+000003FFF23060A6 ((module-name not available)): (filename not available): (function-name not available)
+0000005BD03AE0B8 ((module-name not available)): (filename not available): (function-name not available)
+000003FFF2343D02 ((module-name not available)): (filename not available): (function-name not available)

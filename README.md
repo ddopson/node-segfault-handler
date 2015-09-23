@@ -8,7 +8,7 @@ Using the module is as simple as:
 
 var SegfaultHandler = require('segfault-handler');
 
-SegfaultHandler.registerHandler();
+SegfaultHandler.registerHandler("crash.log"); // With no argument, SegfaultHandler will generate a generic log file name
 
 SegfaultHandler.causeSegfault(); // simulates a buggy native module that dereferences NULL
 
@@ -16,7 +16,7 @@ SegfaultHandler.causeSegfault(); // simulates a buggy native module that derefer
 
 Obviously, you would only include the first two lines in your own code; the third is for testing purposes and to demonstrate functionality.
 
-After running the above sample, you will see a stacktrace that looks like:
+After running the above sample, you will see a stacktrace on OSX and Linux that looks like:
 
 ```
 PID 67926 received SIGSEGV for address: 0x0
@@ -28,11 +28,34 @@ PID 67926 received SIGSEGV for address: 0x0
 5   node                                0x00000001000a45de _ZN2v88internalL21Builtin_HandleApiCallENS0_12_GLOBAL__N_116BuiltinArgumentsILNS0_21BuiltinExtraArgumentsE1EEEPNS0_7IsolateE + 430
 ```
 
+And on Windows:
+
+```
+PID 11880 received SIGSEGV for address: 0xfe101419
+SymInit: Symbol-SearchPath: '.;c:\github\node-segfault-handler;c:\Program Files\nodejs;C:\Windows;C:\Windows\system32;SRV*C:\websymbols*http://msdl.microsoft.com/download/symbols;', symOptions: 530, UserName: 'tylerw'
+OS-Version: 6.3.9600 () 0x100-0x1
+c:\github\node-segfault-handler\src\stackwalker.cpp (941): StackWalker::ShowCallstack
+c:\github\node-segfault-handler\src\segfault-handler.cpp (114): segfault_handler
+00007FFF0A2622C7 (ntdll): (filename not available): RtlNormalizeString
+00007FFF0A2138FE (ntdll): (filename not available): RtlWalkFrameChain
+00007FFF0A29544A (ntdll): (filename not available): KiUserExceptionDispatcher
+c:\github\node-segfault-handler\src\segfault-handler.cpp (138): segfault_stack_frame_1
+c:\github\node-segfault-handler\node_modules\nan\nan_callbacks_12_inl.h (175): Nan::imp::FunctionCallbackWrapper
+00007FF64489D4A9 (node): (filename not available): v8::Unlocker::~Unlocker
+00007FF644865E90 (node): (filename not available): v8::Unlocker::~Unlocker
+00007FF644863D79 (node): (filename not available): v8::Unlocker::~Unlocker
+00000000C3D060A6 ((module-name not available)): (filename not available): (function-name not available)
+000000E36B69E3F8 ((module-name not available)): (filename not available): (function-name not available)
+00000000C3D43D02 ((module-name not available)): (filename not available): (function-name not available)
+```
+
 Now you can start debugging using tools like "objdump -dS module.node" to try and sort out what the stack actually means.  Sometimes, just identifying _which_ native module is causing problems is the biggest win.
 
 Cheers, enjoy.  And happy hunting.
 
 # License
+
+We are using the callstack walker project from [Walking the Callstack](http://www.codeproject.com/Articles/11132/Walking-the-callstack).
 
 This software is licensed for use under the [WTFPL](http://en.wikipedia.org/wiki/WTFPL); version 2 if it's a lawyer asking.  Though if you make good use of this or any of my other tools, I'd appreciate an email letting me know what you used it for or how you stumbled across it.
 
