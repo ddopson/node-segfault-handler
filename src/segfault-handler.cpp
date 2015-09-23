@@ -57,7 +57,7 @@ static void buildFileName(char sbuff[BUFF_SIZE], int pid) {
   // Construct a filename
   time(&now);
   if (logPath[0] != '\0') {
-    SNPRINTF(sbuff, BUFF_SIZE, logPath);
+    SNPRINTF(sbuff, BUFF_SIZE, "%s", logPath);
   } else {
     SNPRINTF(sbuff, BUFF_SIZE, "stacktrace-%d-%d.log", (int)now, pid);
   }
@@ -179,9 +179,14 @@ NAN_METHOD(RegisterHandler) {
   }
 
   #ifdef _WIN32
-  AddVectoredExceptionHandler(1, segfault_handler);
+    AddVectoredExceptionHandler(1, segfault_handler);
   #else
-  signal(SIGSEGV, segfault_handler);
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(struct sigaction));
+    sigemptyset(&sa.sa_mask);
+    sa.sa_sigaction = segfault_handler;
+    sa.sa_flags   = SA_SIGINFO;
+    sigaction(SIGSEGV, &sa, NULL);
   #endif
 }
 
