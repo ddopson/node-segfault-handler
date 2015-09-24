@@ -49,6 +49,8 @@ c:\github\node-segfault-handler\node_modules\nan\nan_callbacks_12_inl.h (175): N
 00000000C3D43D02 ((module-name not available)): (filename not available): (function-name not available)
 ```
 
+Be aware that in production environments, pdb files must be included as part of your install to resolve names / lines in Windows stack traces.
+
 Now you can start debugging using tools like "objdump -dS module.node" to try and sort out what the stack actually means.  Sometimes, just identifying _which_ native module is causing problems is the biggest win.
 
 Cheers, enjoy.  And happy hunting.
