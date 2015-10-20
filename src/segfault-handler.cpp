@@ -68,6 +68,7 @@ SEGFAULT_HANDLER {
   #ifndef _WIN32
     void    *array[32]; // Array to store backtrace symbols
     size_t  size;       // To store the size of the stack backtrace
+    int     signal;     // Which signal was received?
   #endif
   char    sbuff[BUFF_SIZE];
   int     n;          // chars written to buffer
@@ -83,14 +84,24 @@ SEGFAULT_HANDLER {
     address = (long)exceptionInfo->ExceptionRecord->ExceptionAddress;
   #else
     address = (long)si->si_addr;
+    signal = si->si_signo;
   #endif
 
   // Write the header line
   n = SNPRINTF(
     sbuff,
     BUFF_SIZE,
-    "PID %d received SIGSEGV for address: 0x%lx\n",
+    "PID %d received "
+  #ifdef _WIN32
+    "segfault"
+  #else
+    "signal %d"
+  #endif
+    " for address: 0x%lx\n",
     pid,
+  #ifndef _WIN32
+    signal,
+  #endif
     address
   );
 
