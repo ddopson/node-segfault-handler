@@ -159,11 +159,11 @@ NAN_METHOD(CauseSegfault) {
 }
 
 NAN_METHOD(RegisterHandler) {
+  int sigArg = -1, signal = SIGSEGV;
   // if passed a path, we'll set the log name to whatever is provided
-  // this will allow users to use the logs in error reporting without redirecting
-  // sdterr
-  logPath[0] = '\0';
-  if (info.Length() == 1) {
+  // this will allow users to use the logs in error reporting without
+  // redirecting stderr
+  if (info.Length() >= 1) {
     if (info[0]->IsString()) {
         v8::String::Utf8Value utf8Value(info[0]->ToString());
 
@@ -172,10 +172,18 @@ NAN_METHOD(RegisterHandler) {
         len = len > BUFF_SIZE ? BUFF_SIZE : len;
 
         strncpy(logPath, *utf8Value, len);
-        logPath[127] = '\0';
+        logPath[BUFF_SIZE-1] = '\0';
+        if (info.Length() >= 2 && info[1]->IsNumber()) {
+          sigArg = 1;
+        }
+    } else if (info[0]->IsNumber()) {
+      sigArg = 0;
     } else {
       return ThrowError("First argument must be a string.");
     }
+  }
+  if (sigArg >= 0) {
+    signal = Nan::To<int32_t>(info[sigArg]).FromMaybe(SIGSEGV);
   }
 
   #ifdef _WIN32
@@ -186,14 +194,54 @@ NAN_METHOD(RegisterHandler) {
     sigemptyset(&sa.sa_mask);
     sa.sa_sigaction = segfault_handler;
     sa.sa_flags   = SA_SIGINFO;
-    sigaction(SIGSEGV, &sa, NULL);
+    sigaction(signal, &sa, NULL);
   #endif
 }
 
 extern "C" {
   NAN_MODULE_INIT(init) {
+    logPath[0] = '\0';
     Nan::SetMethod(target, "registerHandler", RegisterHandler);
     Nan::SetMethod(target, "causeSegfault", CauseSegfault);
+    // Export signal names and values.
+#define EXPORT(signal) \
+    Nan::ForceSet(target, Nan::New<v8::String>(#signal).ToLocalChecked(), Nan::New(signal), v8::ReadOnly)
+    // Not all of these make sense to register handlers on, but we'll let
+    // the user decide that.  Presumably you're using this package because
+    // you're seeing an unexpected signal of some sort.  Hopefully it's
+    // included below.  (And if not, just pass it by integer value.)
+    EXPORT(SIGHUP);
+    EXPORT(SIGINT);
+    EXPORT(SIGQUIT);
+    EXPORT(SIGILL);
+    EXPORT(SIGTRAP);
+    EXPORT(SIGABRT);
+    EXPORT(SIGBUS);
+    EXPORT(SIGFPE);
+    EXPORT(SIGKILL);
+    EXPORT(SIGUSR1);
+    EXPORT(SIGUSR2);
+    EXPORT(SIGSEGV);
+    EXPORT(SIGUSR2);
+    EXPORT(SIGPIPE);
+    EXPORT(SIGALRM);
+    EXPORT(SIGTERM);
+    //EXPORT(SIGSTKFLT); // not present on OSX
+    EXPORT(SIGCHLD);
+    EXPORT(SIGCONT);
+    EXPORT(SIGSTOP);
+    EXPORT(SIGTSTP);
+    EXPORT(SIGTTIN);
+    EXPORT(SIGTTOU);
+    EXPORT(SIGURG);
+    EXPORT(SIGXCPU);
+    EXPORT(SIGXFSZ);
+    EXPORT(SIGVTALRM);
+    EXPORT(SIGPROF);
+    EXPORT(SIGWINCH);
+    EXPORT(SIGIO);
+    //EXPORT(SIGPWR); // not present on OSX
+    EXPORT(SIGSYS);
   }
 
   NODE_MODULE(segfault_handler, init)

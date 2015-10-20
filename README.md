@@ -55,6 +55,19 @@ Now you can start debugging using tools like "objdump -dS module.node" to try an
 
 Cheers, enjoy.  And happy hunting.
 
+# Looking at other signals.
+
+On OSX and Linux you can also register handlers for other (presumably
+unexpected) signals by specifying an extra parameter:
+```javascript
+
+var SegfaultHandler = require('segfault-handler');
+
+SegfaultHandler.registerHandler(SegfaultHandler.SIGSEGV);
+SegfaultHandler.registerHandler("crash.log", SegfaultHandler.SIGABRT);
+```
+The last logfile name registered takes effect.
+
 # License
 
 We are using the callstack walker project from [Walking the Callstack](http://www.codeproject.com/Articles/11132/Walking-the-callstack).
