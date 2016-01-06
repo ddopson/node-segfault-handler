@@ -7,6 +7,8 @@
 #include <sys/types.h>
 #include <v8-debug.h>
 #include <time.h>
+#include <node.h>
+#include <uv.h>
 
 #ifdef _WIN32
 #include "../includes/StackWalker.h"
@@ -20,6 +22,7 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <pthread.h>
 #endif
 
 using namespace v8;
@@ -48,6 +51,121 @@ using namespace Nan;
 #endif
 
 #define BUFF_SIZE 128
+
+#ifndef _WIN32
+struct callback_helper {
+
+  struct callback_args {
+
+    v8::Persistent<Function, v8::CopyablePersistentTraits<Function> >* callback;
+    char **stack;
+    size_t stack_size;
+    int signo;
+    long addr;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+
+    callback_args(v8::Persistent<Function, v8::CopyablePersistentTraits<Function> >* callback, void * const* stack, size_t stack_size, int signo, long addr) :
+    callback(callback), stack(backtrace_symbols(stack, stack_size)), stack_size(stack_size), signo(signo), addr(addr) {
+      pthread_mutex_init(&mutex, NULL);
+      pthread_cond_init(&cond, NULL);
+    }
+
+    ~callback_args() {
+      free(stack);
+      pthread_mutex_destroy(&mutex);
+      pthread_cond_destroy(&cond);
+    }
+  };
+
+  uv_async_t* handle;
+  v8::Persistent<Function, v8::CopyablePersistentTraits<Function> > callback;
+
+  callback_helper(Handle<Function> func) {
+    Isolate* isolate = Isolate::GetCurrent();
+    // set the function reference
+    callback.Reset(isolate, func);
+
+    // create the callback handle
+    handle = (uv_async_t*) malloc(sizeof (uv_async_t));
+
+    // initialize the handle
+    uv_async_init(uv_default_loop(), handle, make_callback);
+  }
+
+  ~callback_helper() {
+    // reset the function reference
+    callback.Reset();
+
+    // close the callback handle
+    uv_close((uv_handle_t*) handle, close_callback);
+  }
+
+  void send(void * const* stack, size_t stack_size, int signo, long addr) {
+    // create the callback arguments
+    callback_args* args = new callback_args(&callback, stack, stack_size, signo, addr);
+
+    // set the handle data so these args are accessible to make_callback
+    handle->data = (void *) args;
+
+    // directly execute the callback if we're on the main thread,
+    // otherwise have uv send it and await the mutex
+    if (Isolate::GetCurrent()) {
+      make_callback(handle);
+    } else {
+      // lock the callback mutex
+      pthread_mutex_lock(&args->mutex);
+
+      // trigger the async callback
+      uv_async_send(handle);
+
+      // wait for it to finish
+      pthread_cond_wait(&args->cond, &args->mutex);
+
+      // unlock the callback mutex
+      pthread_mutex_unlock(&args->mutex);
+    }
+
+    // free the callback args
+    delete args;
+  }
+
+  static void close_callback(uv_handle_t* handle) {
+    // free the callback handle
+    free(handle);
+  }
+
+  static void make_callback(uv_async_t* handle) {
+    Isolate* isolate = Isolate::GetCurrent();
+    v8::HandleScope scope(isolate);
+
+    struct callback_args* args = (struct callback_args*) handle->data;
+
+    // lock the mutex
+    pthread_mutex_lock(&args->mutex);
+
+    // build the stack arguments
+    Local<Array> argStack = Array::New(isolate, args->stack_size);
+    for (size_t i = 0; i < args->stack_size; i++) {
+      argStack->Set(i, String::NewFromUtf8(isolate, args->stack[i]));
+    }
+
+    // collect all callback arguments
+    Local<Value> argv[3] = {Number::New(isolate, args->signo), Number::New(isolate, args->addr), argStack};
+
+    // execute the callback function on the main threaod
+    Local<Function>::New(isolate, *args->callback)->Call(isolate->GetCurrentContext()->Global(), 3, argv);
+
+    // broadcast that we're done with the callback
+    pthread_cond_broadcast(&args->cond);
+
+    // unlock the mutex
+    pthread_mutex_unlock(&args->mutex);
+  }
+};
+
+struct callback_helper* callback;
+#endif
 
 char logPath[BUFF_SIZE];
 
@@ -112,9 +230,17 @@ SEGFAULT_HANDLER {
     backtrace_symbols_fd(array, size, STDERR_FD);
   #endif
 
-  // Exit violently
   CLOSE(fd);
-  exit(-1);
+
+  #ifndef _WIN32
+    if (callback) {
+	  // execute the callback and wait until it has completed
+      callback->send(array, size, si->si_signo, (long)si->si_addr);
+
+	  // release the callback
+      delete callback;
+    }
+  #endif
 
   #ifdef _WIN32
     return EXCEPTION_EXECUTE_HANDLER;
@@ -162,10 +288,11 @@ NAN_METHOD(RegisterHandler) {
   // if passed a path, we'll set the log name to whatever is provided
   // this will allow users to use the logs in error reporting without redirecting
   // sdterr
-  logPath[0] = '\0';
-  if (info.Length() == 1) {
-    if (info[0]->IsString()) {
-        v8::String::Utf8Value utf8Value(info[0]->ToString());
+
+  if (info.Length() > 0) {
+    for (int i = 0; i < info.Length(); i++) {
+      if (info[i]->IsString()) {
+        String::Utf8Value utf8Value(info[i]->ToString());
 
         // need to do a copy to make sure the string doesn't become a dangling pointer
         int len = utf8Value.length();
@@ -173,8 +300,19 @@ NAN_METHOD(RegisterHandler) {
 
         strncpy(logPath, *utf8Value, len);
         logPath[127] = '\0';
-    } else {
-      return ThrowError("First argument must be a string.");
+      
+      #ifndef _WIN32
+      } else if (info[i]->IsFunction()) {
+        if (callback) {
+          // release previous callback
+          delete callback;
+        }
+
+        // create the new callback object
+        callback = new callback_helper(Handle<Function>::Cast(info[i]));
+      #endif
+
+      }
     }
   }
 
@@ -185,7 +323,7 @@ NAN_METHOD(RegisterHandler) {
     memset(&sa, 0, sizeof(struct sigaction));
     sigemptyset(&sa.sa_mask);
     sa.sa_sigaction = segfault_handler;
-    sa.sa_flags   = SA_SIGINFO;
+    sa.sa_flags   = SA_SIGINFO | SA_RESETHAND;
     sigaction(SIGSEGV, &sa, NULL);
   #endif
 }
