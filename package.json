@@ -17,5 +17,6 @@
     "bindings": "^1.2.1",
     "nan": "^2.0.9"
   },
-  "main": "index.js"
+  "main": "index.js",
+  "license": "SEE LICENSE IN README.md"
 }
