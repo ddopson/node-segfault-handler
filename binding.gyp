@@ -18,9 +18,9 @@
           ]
         }]
       ],
-      "cflags": [ "-O0" ],
+      "cflags": [ "-O0", "-funwind-tables" ],
       "xcode_settings": {
-        "OTHER_CFLAGS": [ "-O0" ]
+        "OTHER_CFLAGS": [ "-O0", "-funwind-tables" ]
       },
       "include_dirs": [
         "<!(node -e \"require('nan')\")"
