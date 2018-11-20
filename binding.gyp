@@ -20,7 +20,8 @@
       ],
       "cflags": [ "-O0", "-funwind-tables" ],
       "xcode_settings": {
-        "OTHER_CFLAGS": [ "-O0", "-funwind-tables" ]
+        "OTHER_CFLAGS": [ "-O0", "-funwind-tables" ],
+        "CLANG_CXX_LIBRARY": "libc++"
       },
       "include_dirs": [
         "<!(node -e \"require('nan')\")"
