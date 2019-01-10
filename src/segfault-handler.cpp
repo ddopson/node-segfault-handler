@@ -294,7 +294,7 @@ NAN_METHOD(RegisterHandler) {
   if (info.Length() > 0) {
     for (int i = 0; i < info.Length(); i++) {
       if (info[i]->IsString()) {
-        String::Utf8Value utf8Value(info[i]->ToString());
+        Nan::Utf8String utf8Value(info[i]);
 
         // need to do a copy to make sure the string doesn't become a dangling pointer
         int len = utf8Value.length();
