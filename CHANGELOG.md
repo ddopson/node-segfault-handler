@@ -14,7 +14,7 @@
 ### 0.2.5 (2015-09-12)
 
 * Bump NAN for 4.0.0 compatibility.
-* Update for NAN 2.0.
+* [PR#26](https://github.com/ddopson/node-segfault-handler/pull/26) - Update for NAN 2.0.
 
 ### 0.2.4 (2014-11-06)
 
