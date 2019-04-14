@@ -2,12 +2,13 @@
   "name": "segfault-handler",
   "description": "catches SIGSEGV and prints diagnostic information",
   "version": "1.0.1",
-  "author": "Dave Dopson <ddopson@gmail.com>",
+  "author": "Kenneth Geisshirt <geisshirt@gmail.com>",
   "contributors": [
     "Dave Dopson <ddopson@gmail.com>",
     "Mark Smith <msmith@rallydev.com>",
     "David Swift <dswift@pccowboy.com>",
-    "Anton Whalley <anton@venshare.com>"
+    "Anton Whalley <anton@venshare.com>",
+    "Kenneth Geisshirt <geisshirt@gmail.com>"
   ],
   "repository": {
     "type": "git",
@@ -18,5 +19,5 @@
     "nan": "^2.0.9"
   },
   "main": "index.js",
-  "license": "SEE LICENSE IN README.md"
+  "license": "BSD-3-Clause"
 }
