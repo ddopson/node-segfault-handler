@@ -1,6 +1,6 @@
 # Overview
 
-This module is a critical tool for debugging Node.js C/C++ native code modules, and is safe to use in production environments.  Normally, when a bug is triggered in native code, the node process simply ends with no helpful information.  In production, this can manifest as worker processes restarting for seemingly no reason.  Running node in gdb is messy and infeasible for a production environment.  Instead this module will sit unobtrusively doing nothing (zero perf impact) as long as Node is well-behaved.  If a SIGSEGV signal is raised, the module will print a native stack trace to both STDERR and to a timestamped file (STDERR is usually ignored in production environments.  files are better).
+This module is a critical tool for debugging Node.js C/C++ native code modules, and is safe to use in production environments.  Normally, when a bug is triggered in native code, the node process simply ends with no helpful information.  In production, this can manifest as worker processes restarting for seemingly no reason.  Running node in gdb is messy and infeasible for a production environment.  Instead this module will sit unobtrusively doing nothing (zero perf impact) as long as Node is well-behaved.  If a SIGSEGV signal is raised, the module will print a native stack trace to both STDERR and to a timestamped file (STDERR is usually ignored in production environments; files are better).
 
 Using the module is as simple as:
 
@@ -17,7 +17,6 @@ SegfaultHandler.registerHandler("crash.log", function(signal, address, stack) {
 });
 
 SegfaultHandler.causeSegfault(); // simulates a buggy native module that dereferences NULL
-
 ```
 
 Obviously, you would only include the first two lines in your own code; the third is for testing purposes and to demonstrate functionality.
@@ -57,16 +56,31 @@ c:\github\node-segfault-handler\node_modules\nan\nan_callbacks_12_inl.h (175): N
 
 Be aware that in production environments, pdb files must be included as part of your install to resolve names / lines in Windows stack traces.
 
-Now you can start debugging using tools like "objdump -dS module.node" to try and sort out what the stack actually means.  Sometimes, just identifying _which_ native module is causing problems is the biggest win.
+Now you can start debugging using tools like `objdump -dS module.node` to try and sort out what the stack actually means.  Sometimes, just identifying _which_ native module is causing problems is the biggest win.
 
 Cheers, enjoy.  And happy hunting.
 
+# Contributors
+
+* Dave Dopson (@ddopson): original author and founder of the project
+* Tyler Ang-Wanek (@implausible)
+* Anton Whalley (@No9)
+* Tristan Colgate-McFarlane (@tcolgate)
+* Jan (@relovution)
+* Mikael Korpela (@simison)
+* Benjamin Byholm (@kkoopa)
+* Tim Kevin Oxley (@timoxley)
+* Thomas P (@TPXP)
+* Byron Clark (@byronclark)
+* Mi Tar (@mitar)
+* Rolf Sommerhalder (@hb9cwp)
+* Mark Smith (@markmsmith)
+* Kenneth Geisshirt (@kneth): current maintainer
+
+If you are a contributor and are missing, please create a pull request.
+
 # License
 
-This software is licensed for use under the BSD license. If you make good use of this or any of my other tools, I'd appreciate an email letting me know what you used it for or how you stumbled across it.
+This software is licensed for use under the BSD license.
 
-We are using the callstack walker project from [Walking the Callstack](http://www.codeproject.com/Articles/11132/Walking-the-callstack) which is also BSD licensed.
-
-I previously licensed this library under the tounge-in-cheek [WTFPL](http://en.wikipedia.org/wiki/WTFPL), but none of my lawyers thought it was funny.
-
-   ---  Dave
+We are using the [callstack walker](https://github.com/JochenKalmbach/StackWalker) project which is also BSD licensed.
