@@ -2,7 +2,7 @@
 
 * [PR#37](https://github.com/ddopson/node-segfault-handler/pull/37) - Fix lack of stack trace on ARM.
 * [PR#57](https://github.com/ddopson/node-segfault-handler/pull/57) - Support for Xcode 10.
-
+* [PR#58](https://github.com/ddopson/node-segfault-handler/pull/58) - Fix the `v8::String` deprecation warning 
 ### 1.0.1 (2018-05-17)
 
 * [PR#36](https://github.com/ddopson/node-segfault-handler/pull/36) - Add license field to `package.json`.
