@@ -1,6 +1,7 @@
 ### X.Y.Z (YYYY-MM-DD)
 
 * [PR#37](https://github.com/ddopson/node-segfault-handler/pull/37) - Fix lack of stack trace on ARM.
+* [PR#57](https://github.com/ddopson/node-segfault-handler/pull/57) - Support for Xcode 10.
 
 ### 1.0.1 (2018-05-17)
 
