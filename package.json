@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "bindings": "^1.2.1",
-    "nan": "^2.0.9"
+    "nan": "git+https://github.com/nodejs/nan.git#8b2b384ba7989d84fb3d0d724dc337a4b72480b6"
   },
   "main": "index.js",
   "license": "BSD-3-Clause"

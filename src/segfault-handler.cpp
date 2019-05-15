@@ -83,7 +83,7 @@ struct callback_helper {
   uv_async_t* handle;
   v8::Persistent<Function, v8::CopyablePersistentTraits<Function> > callback;
 
-  callback_helper(Handle<Function> func) {
+  callback_helper(Local<Function> func) {
     Isolate* isolate = Isolate::GetCurrent();
     // set the function reference
     callback.Reset(isolate, func);
@@ -156,7 +156,7 @@ struct callback_helper {
     Local<Value> argv[3] = {Number::New(isolate, args->signo), Number::New(isolate, args->addr), argStack};
 
     // execute the callback function on the main threaod
-    Local<Function>::New(isolate, *args->callback)->Call(isolate->GetCurrentContext()->Global(), 3, argv);
+    Nan::Call(Local<Function>::New(isolate, *args->callback), isolate->GetCurrentContext()->Global(), 3, argv);
 
     // broadcast that we're done with the callback
     pthread_cond_broadcast(&args->cond);
@@ -302,7 +302,7 @@ NAN_METHOD(RegisterHandler) {
 
         strncpy(logPath, *utf8Value, len);
         logPath[127] = '\0';
-      
+
       #ifndef _WIN32
       } else if (info[i]->IsFunction()) {
         if (callback) {
@@ -311,7 +311,7 @@ NAN_METHOD(RegisterHandler) {
         }
 
         // create the new callback object
-        callback = new callback_helper(Handle<Function>::Cast(info[i]));
+        callback = new callback_helper(Local<Function>::Cast(info[i]));
       #endif
 
       }
