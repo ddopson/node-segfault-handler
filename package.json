@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "bindings": "^1.2.1",
-    "nan": "^2.0.9"
+    "nan": "^2.13.2"
   },
   "main": "index.js",
   "license": "BSD-3-Clause"
