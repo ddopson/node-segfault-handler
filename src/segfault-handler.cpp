@@ -149,7 +149,7 @@ struct callback_helper {
     // build the stack arguments
     Local<Array> argStack = Array::New(isolate, args->stack_size);
     for (size_t i = 0; i < args->stack_size; i++) {
-      argStack->Set(i, String::NewFromUtf8(isolate, args->stack[i]));
+      Nan::Set(argStack, i, String::NewFromUtf8(isolate, args->stack[i], v8::NewStringType::kInternalized).ToLocalChecked());
     }
 
     // collect all callback arguments
