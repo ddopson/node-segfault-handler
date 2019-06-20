@@ -1,3 +1,7 @@
+### Next
+
+* [PR#65](https://github.com/ddopson/node-segfault-handler/pull/65) - Add TypeScript definitions.
+
 ### 1.2.0 (2018-05-18)
 
 * [PR#62](https://github.com/ddopson/node-segfault-handler/pull/62) - Support for node 12.

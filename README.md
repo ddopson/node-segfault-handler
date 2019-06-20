@@ -76,6 +76,7 @@ Cheers, enjoy.  And happy hunting.
 * Rolf Sommerhalder (@hb9cwp)
 * Mark Smith (@markmsmith)
 * Paul-Maxime (@paul-maxime)
+* Ștefan-Gabriel Muscalu (@legraphista)
 * Kenneth Geisshirt (@kneth): current maintainer
 
 If you are a contributor and are missing, please create a pull request.
