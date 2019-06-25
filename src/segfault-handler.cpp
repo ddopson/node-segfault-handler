@@ -59,7 +59,7 @@ struct callback_helper {
 
   struct callback_args {
 
-    v8::Persistent<Function, v8::CopyablePersistentTraits<Function> >* callback;
+    Nan::Persistent<Function, Nan::CopyablePersistentTraits<Function> >* callback;
     char **stack;
     size_t stack_size;
     int signo;
@@ -67,7 +67,7 @@ struct callback_helper {
     pthread_mutex_t mutex;
     pthread_cond_t cond;
 
-    callback_args(v8::Persistent<Function, v8::CopyablePersistentTraits<Function> >* callback, void * const* stack, size_t stack_size, int signo, long addr) :
+    callback_args(Nan::Persistent<Function, Nan::CopyablePersistentTraits<Function> >* callback, void * const* stack, size_t stack_size, int signo, long addr) :
     callback(callback), stack(backtrace_symbols(stack, stack_size)), stack_size(stack_size), signo(signo), addr(addr) {
       pthread_mutex_init(&mutex, NULL);
       pthread_cond_init(&cond, NULL);
@@ -81,12 +81,11 @@ struct callback_helper {
   };
 
   uv_async_t* handle;
-  v8::Persistent<Function, v8::CopyablePersistentTraits<Function> > callback;
+  Nan::Persistent<Function, Nan::CopyablePersistentTraits<Function> > callback;
 
   callback_helper(Local<Function> func) {
-    Isolate* isolate = Isolate::GetCurrent();
     // set the function reference
-    callback.Reset(isolate, func);
+    callback.Reset(func);
 
     // create the callback handle
     handle = (uv_async_t*) malloc(sizeof (uv_async_t));
@@ -113,7 +112,11 @@ struct callback_helper {
     // directly execute the callback if we're on the main thread,
     // otherwise have uv send it and await the mutex
     if (Isolate::GetCurrent()) {
+      #if defined(UV_VERSION_MAJOR) && UV_VERSION_MAJOR > 0
       make_callback(handle);
+      #else
+      make_callback(handle, 0);
+      #endif
     } else {
       // lock the callback mutex
       pthread_mutex_lock(&args->mutex);
@@ -137,9 +140,13 @@ struct callback_helper {
     free(handle);
   }
 
+  #if defined(UV_VERSION_MAJOR) && UV_VERSION_MAJOR > 0
   static void make_callback(uv_async_t* handle) {
-    Isolate* isolate = Isolate::GetCurrent();
-    v8::HandleScope scope(isolate);
+  #else
+  static void make_callback(uv_async_t* handle, int status) {
+  #endif
+
+    Nan::HandleScope scope;
 
     struct callback_args* args = (struct callback_args*) handle->data;
 
@@ -147,16 +154,16 @@ struct callback_helper {
     pthread_mutex_lock(&args->mutex);
 
     // build the stack arguments
-    Local<Array> argStack = Array::New(isolate, args->stack_size);
+    Local<Array> argStack = Nan::New<Array>(args->stack_size);
     for (size_t i = 0; i < args->stack_size; i++) {
-      Nan::Set(argStack, i, String::NewFromUtf8(isolate, args->stack[i], v8::NewStringType::kInternalized).ToLocalChecked());
+      Nan::Set(argStack, i, Nan::New<String>(args->stack[i]).ToLocalChecked());
     }
 
     // collect all callback arguments
-    Local<Value> argv[3] = {Number::New(isolate, args->signo), Number::New(isolate, args->addr), argStack};
+    Local<Value> argv[3] = {Nan::New<Number>(args->signo), Nan::New<Number>(args->addr), argStack};
 
     // execute the callback function on the main threaod
-    Nan::Call(Local<Function>::New(isolate, *args->callback), isolate->GetCurrentContext()->Global(), 3, argv);
+    Nan::Call(Nan::New<Function>(*args->callback), Nan::GetCurrentContext()->Global(), 3, argv);
 
     // broadcast that we're done with the callback
     pthread_cond_broadcast(&args->cond);
