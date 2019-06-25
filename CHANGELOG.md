@@ -1,3 +1,5 @@
+### Next (YYYY-mm-dd)
+
 ### 1.3.0 (2019-06-25)
 
 * [PR#65](https://github.com/ddopson/node-segfault-handler/pull/65) - Add TypeScript definitions.
