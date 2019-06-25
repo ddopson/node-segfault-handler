@@ -77,6 +77,7 @@ Cheers, enjoy.  And happy hunting.
 * Mark Smith (@markmsmith)
 * Paul-Maxime (@paul-maxime)
 * Ștefan-Gabriel Muscalu (@legraphista)
+* Matt Esch (@Matt-Esch)
 * Kenneth Geisshirt (@kneth): current maintainer
 
 If you are a contributor and are missing, please create a pull request.

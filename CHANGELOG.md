@@ -1,12 +1,13 @@
-### Next
+### 1.3.0 (2019-06-25)
 
 * [PR#65](https://github.com/ddopson/node-segfault-handler/pull/65) - Add TypeScript definitions.
+* [PR#66](https://github.com/ddopson/node-segfault-handler/pull/66) - Support for node 0.10.
 
-### 1.2.0 (2018-05-18)
+### 1.2.0 (2019-05-18)
 
 * [PR#62](https://github.com/ddopson/node-segfault-handler/pull/62) - Support for node 12.
 
-### 1.1.0 (2018-04-30)
+### 1.1.0 (2019-04-30)
 
 * [PR#37](https://github.com/ddopson/node-segfault-handler/pull/37) - Fix lack of stack trace on ARM.
 * [PR#57](https://github.com/ddopson/node-segfault-handler/pull/57) - Support for Xcode 10.
