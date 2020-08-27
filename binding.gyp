@@ -24,6 +24,11 @@
             "src/StackWalker.cpp",
             "includes/StackWalker.h"
           ]
+        }],
+        ["OS == 'linux'", {
+          "cflags_cc": [
+            "-Wno-cast-function-type" # nan issue: https://github.com/nodejs/nan/issues/807
+          ]
         }]
       ],
       "cflags": [ "-O0", "-funwind-tables" ],
