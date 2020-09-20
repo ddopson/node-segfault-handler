@@ -1,6 +1,6 @@
 {
   "variables": {
-    "BUILD_WITH_LIBEXEC": "<!(python -c 'from ctypes.util import find_library;print int(find_library(\"execinfo\")!=None)')",
+    "BUILD_WITH_LIBEXEC": "<!(python -c 'from ctypes.util import find_library;print(int(find_library(\"execinfo\")!=None))')",
   },
   "targets": [
     {
