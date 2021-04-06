@@ -176,6 +176,10 @@ struct callback_helper {
 struct callback_helper* callback;
 #endif
 
+#ifdef _WIN32
+const DWORD kVCThreadNameException = 0x406D1388;
+#endif
+
 char logPath[BUFF_SIZE];
 
 static void buildFileName(char sbuff[BUFF_SIZE], int pid) {
@@ -192,6 +196,7 @@ static void buildFileName(char sbuff[BUFF_SIZE], int pid) {
 
 SEGFAULT_HANDLER {
   long    address;
+  long    code;
   #ifndef _WIN32
     void    *array[32]; // Array to store backtrace symbols
     size_t  size;       // To store the size of the stack backtrace
@@ -208,18 +213,37 @@ SEGFAULT_HANDLER {
 
   #ifdef _WIN32
     address = (long)exceptionInfo->ExceptionRecord->ExceptionAddress;
+    code = (long)exceptionInfo->ExceptionRecord->ExceptionCode;
+
+    switch (code) {
+      case DBG_PRINTEXCEPTION_WIDE_C:
+      case DBG_PRINTEXCEPTION_C:
+        // fprintf(stderr, "Debug exception %lx.\n", code);
+        return EXCEPTION_CONTINUE_SEARCH;
+      case kVCThreadNameException:
+        // fprintf(stderr, "Setting thread name %lx.\n", code);
+        return EXCEPTION_CONTINUE_SEARCH;
+      default:
+        break;
+    }
   #else
     address = (long)si->si_addr;
+    code = 0;
   #endif
 
   // Write the header line
   n = SNPRINTF(
     sbuff,
     BUFF_SIZE,
-    "PID %d received SIGSEGV for address: 0x%lx\n",
+    "PID %d received SIGSEGV for address: 0x%lx code: 0x%lx\n",
     pid,
-    address
+    address,
+    code
   );
+
+  if (code == DBG_PRINTEXCEPTION_C || code == DBG_PRINTEXCEPTION_WIDE_C) {
+
+  }
 
   if(fd > 0) {
     if (WRITE(fd, sbuff, n) != n) {
