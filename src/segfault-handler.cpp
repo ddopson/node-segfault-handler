@@ -326,7 +326,7 @@ NAN_METHOD(RegisterHandler) {
   }
 
   #ifdef _WIN32
-    AddVectoredExceptionHandler(1, segfault_handler);
+    SetUnhandledExceptionFilter(segfault_handler);
   #else
     struct sigaction sa;
     memset(&sa, 0, sizeof(struct sigaction));
