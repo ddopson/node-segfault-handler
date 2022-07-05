@@ -1,6 +1,6 @@
 export type SIGNAL = "SIGSEGV" | string;
 
-export type CrashCallback = (signal: SIGNAL, address: string, stack: string[]) => any;
+export type CrashCallback = (signal: SIGNAL, address: string, stack: string[]) => void;
 
 export function registerHandler(): void;
 export function registerHandler(file: string): void;
